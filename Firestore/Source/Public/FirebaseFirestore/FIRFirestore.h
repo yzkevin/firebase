@@ -30,6 +30,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NS_SWIFT_NAME(TransactionOptions)
+@interface FIRFirestoreTransactionOptions : NSObject <NSCopying>
+
+// Returns a new instance with default values
+- (instancetype)init;
+
+// Throws if maxAttempts < 1. Default: 5
+@property(nonatomic, assign) NSInteger maxAttempts;
+
+@end
+
 /**
  * `FIRFirestore` represents a Firestore Database and is the entry point for all Firestore
  * operations.
@@ -144,6 +155,11 @@ NS_SWIFT_NAME(Firestore)
  */
 - (void)runTransactionWithBlock:(id _Nullable (^)(FIRTransaction *, NSError **))updateBlock
                      completion:(void (^)(id _Nullable result, NSError *_Nullable error))completion;
+
+- (void)runTransactionWithOptions: (FIRFirestoreTransactionOptions*) options
+                     update:(id _Nullable (^)(FIRTransaction *, NSError **))updateBlock
+                     completion:(void (^)(id _Nullable result, NSError *_Nullable error))completion
+    NS_SWIFT_NAME(runTransaction(withOptions:transaction:completion));
 
 /**
  * Creates a write batch, used for performing multiple writes as a single

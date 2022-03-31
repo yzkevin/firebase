@@ -17,7 +17,7 @@ import Firebase
 
 @main
 struct FirestoreSampleApp: App {
-  init() {
+    init() async {
     FirebaseApp.configure()
 
     let settings = Firestore.firestore().settings
@@ -25,6 +25,18 @@ struct FirestoreSampleApp: App {
     settings.isPersistenceEnabled = false
     settings.isSSLEnabled = false
     Firestore.firestore().settings = settings
+      let firestore = Firestore.firestore()
+      
+      let options = TransactionOptions()
+      
+      firestore.runTransaction({txn, err in }, completion: {result, err in })
+      
+      firestore.runTransaction(with: options,
+                               update: {txn, err in },
+                               completion: {result, err in})
+      
+       let result = try await firestore.runTransaction(with: options, update: {txn, err in})
+
   }
 
   var body: some Scene {
