@@ -132,7 +132,8 @@ extension CarthageUtils {
         let fullHash = try HashCalculator.sha256Contents(ofDir: fullPath)
         hash = String(fullHash.prefix(16))
       } catch {
-        fatalError("Could not hash contents of \(product) for Carthage build. \(error)")
+        hash = "fail"
+        //fatalError("Could not hash contents of \(product) for Carthage build. \(error)")
       }
 
       // Generate the zip name to write to the manifest as well as the actual zip file.

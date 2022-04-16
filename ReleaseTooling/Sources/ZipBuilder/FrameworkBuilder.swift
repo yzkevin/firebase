@@ -144,6 +144,8 @@ struct FrameworkBuilder {
     return .success(output: output)
   }
 
+  static var buildCount = 0 // make unique number for each build to disambiguate CoreDiagnostics builds
+
   /// Build all thin slices for an open source pod.
   /// - Parameter framework: The name of the framework to be built.
   /// - Parameter logsDir: The path to the directory to place build logs.
@@ -155,13 +157,41 @@ struct FrameworkBuilder {
     // Build every architecture and save the locations in an array to be assembled.
     var slicedFrameworks = [TargetPlatform: URL]()
     for targetPlatform in targetPlatforms {
+      FrameworkBuilder.buildCount += 1
       let buildDir = projectDir.appendingPathComponent(targetPlatform.buildName)
       let sliced = buildSlicedFramework(withName: framework,
                                         targetPlatform: targetPlatform,
                                         buildDir: buildDir,
                                         logRoot: logsDir,
                                         setCarthage: setCarthage)
-      slicedFrameworks[targetPlatform] = sliced
+      // Make a copy because `xcodebuild archive` deletes the previous
+ 
+      let parentDir = FileManager.default.temporaryDirectory(
+        withName: "\(framework)\(FrameworkBuilder.buildCount)-\(targetPlatform.buildDirName)")
+      do {
+        try FileManager.default.createDirectory(at: parentDir, withIntermediateDirectories: false)
+      } catch {
+        fatalError("Could not create directory while saving build slice framework \(framework). " +
+          "\(error)")
+      }
+      let sliceDir = parentDir.appendingPathComponent(sliced.lastPathComponent)
+
+      do {
+        // Resolve symbolic link.
+        var source = sliced
+        let vals = try source.resourceValues(forKeys: [.isSymbolicLinkKey])
+        if let islink = vals.isSymbolicLink, islink {
+          print("it's a symbolic link")
+          let dest = source.resolvingSymlinksInPath()
+          let report = dest != source ? "It exists" : "It doesn't exist"
+          print(report)
+          source = dest
+        }
+        try FileManager.default.copyItem(at: source, to: sliceDir)
+      } catch {
+        fatalError("Could not copy slice from \(sliced) to \(sliceDir): \(error)")
+      }
+      slicedFrameworks[targetPlatform] = sliceDir
     }
     return slicedFrameworks
   }
@@ -197,14 +227,14 @@ struct FrameworkBuilder {
       }
     }
 
-    var args = ["build",
+    var args = ["archive",
                 "-configuration", "release",
                 "-workspace", workspacePath,
                 "-scheme", framework,
                 "GCC_GENERATE_DEBUGGING_SYMBOLS=NO",
-                "ARCHS=\(archs)",
-                "VALID_ARCHS=\(archs)",
-                "ONLY_ACTIVE_ARCH=NO",
+                //"ARCHS=\(archs)",
+                //"VALID_ARCHS=\(archs)",
+                //"ONLY_ACTIVE_ARCH=NO",
                 // BUILD_LIBRARY_FOR_DISTRIBUTION=YES is necessary for Swift libraries.
                 // See https://forums.developer.apple.com/thread/125646.
                 // Unlike the comment there, the option here is sufficient to cause .swiftinterface
