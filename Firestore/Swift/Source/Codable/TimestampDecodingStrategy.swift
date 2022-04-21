@@ -17,13 +17,6 @@
 import Foundation
 import FirebaseFirestore
 
-@available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
-private var _iso8601Formatter: ISO8601DateFormatter = {
-  let formatter = ISO8601DateFormatter()
-  formatter.formatOptions = .withInternetDateTime
-  return formatter
-}()
-
 public extension Firestore.Decoder.DateDecodingStrategy {
   /// Decode the `Date` from a Firestore `Timestamp`
   static var timestamp: Firestore.Decoder.DateDecodingStrategy {
