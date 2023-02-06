@@ -104,6 +104,18 @@ static dispatch_once_t sDefaultOptionsDictionaryOnceToken;
   return sDefaultOptions;
 }
 
++ (FIROptions *)defaultOptionsWithFirebaseKey:(NSString *)key {
+  dispatch_once(&sDefaultOptionsOnceToken, ^{
+    NSDictionary *defaultOptionsDictionary = [self defaultOptionsDictionaryWithFirebaseKey:key];
+    if (defaultOptionsDictionary != nil) {
+      sDefaultOptions =
+          [[FIROptions alloc] initInternalWithOptionsDictionary:defaultOptionsDictionary];
+    }
+  });
+
+  return sDefaultOptions;
+}
+
 #pragma mark - Private class methods
 
 + (NSDictionary *)defaultOptionsDictionary {
@@ -113,6 +125,55 @@ static dispatch_once_t sDefaultOptionsDictionaryOnceToken;
       return;
     }
     sDefaultOptionsDictionary = [NSDictionary dictionaryWithContentsOfFile:plistFilePath];
+    if (sDefaultOptionsDictionary == nil) {
+      FIRLogError(kFIRLoggerCore, @"I-COR000011",
+                  @"The configuration file is not a dictionary: "
+                  @"'%@.%@'.",
+                  kServiceInfoFileName, kServiceInfoFileType);
+    }
+  });
+
+  return sDefaultOptionsDictionary;
+}
+
++ (NSDictionary *)defaultOptionsDictionaryWithFirebaseKey:(NSString *)key {
+  dispatch_once(&sDefaultOptionsDictionaryOnceToken, ^{
+    
+    NSArray *items = [key componentsSeparatedByString:@" "];
+    if (items.count != 2) {
+      FIRLogError(kFIRLoggerCore, @"I-COR000015",
+                  @"The configuration key is not valid Firebase key"
+                  @"'%@'.",
+                  key);
+      return;
+    }
+    
+    NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:items[0] options:0];
+    NSString *decodedString = [[NSString alloc] initWithData:decodedData encoding:NSUTF8StringEncoding];
+    NSLog(@"%@", decodedString);
+    
+    
+    //TODO: compare bundle ID
+    
+    NSArray *configItems = [decodedString componentsSeparatedByString:@","];
+    if (configItems.count != 5) {
+      FIRLogError(kFIRLoggerCore, @"I-COR000015",
+                  @"The configuration key is not valid Firebase key"
+                  @"'%@'.",
+                  key);
+      return;
+    }
+    
+    NSArray *appIDItems = [configItems[1] componentsSeparatedByString:@":"];
+    if (appIDItems.count != 4) {
+      FIRLogError(kFIRLoggerCore, @"I-COR000015",
+                  @"The configuration key is not valid Firebase key"
+                  @"'%@'.",
+                  key);
+      return;
+    }
+
+    sDefaultOptionsDictionary = @{kFIRAPIKey: configItems[0], kFIRGoogleAppID: configItems[1],kFIRProjectID: configItems[2],kFIRStorageBucket: configItems[3],kFIRDatabaseURL: configItems[4], kFIRBundleID: items[1], kFIRGCMSenderID: appIDItems[1]};
     if (sDefaultOptionsDictionary == nil) {
       FIRLogError(kFIRLoggerCore, @"I-COR000011",
                   @"The configuration file is not a dictionary: "

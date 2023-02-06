@@ -54,6 +54,8 @@ NS_SWIFT_NAME(FirebaseApp)
  */
 + (void)configure;
 
++ (void)configureWithFirebaseKey:(NSString *)key;
+
 /**
  * Configures the default Firebase app with the provided options. The default app is named
  * "__FIRAPP_DEFAULT". Raises an exception if any configuration step fails. This method should be
@@ -75,6 +77,8 @@ NS_SWIFT_NAME(FirebaseApp)
 + (void)configureWithName:(NSString *)name
                   options:(FIROptions *)options NS_SWIFT_NAME(configure(name:options:));
 // clang-format on
+
++ (void)configureWithName:(NSString *)name FirebaseKey:(NSString *)key;
 
 /**
  * Returns the default app, or `nil` if the default app does not exist.

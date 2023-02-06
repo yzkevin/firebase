@@ -31,6 +31,12 @@ NS_SWIFT_NAME(FirebaseOptions)
 + (nullable FIROptions *)defaultOptions NS_SWIFT_NAME(defaultOptions());
 
 /**
+ * Returns the default options. The first time this is called it synchronously reads
+ * from a key.
+ */
++ (nullable FIROptions *)defaultOptionsWithFirebaseKey:(NSString *)key NS_SWIFT_NAME(defaultOptions(key:));
+
+/**
  * An API key used for authenticating requests from your Apple app, e.g.
  * The key must begin with "A" and contain exactly 39 alphanumeric characters, used to identify your
  * app to Google servers.

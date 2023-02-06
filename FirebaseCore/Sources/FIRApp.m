@@ -129,6 +129,15 @@ static FIRApp *sDefaultApp;
   [FIRApp configureWithName:kFIRDefaultAppName options:options];
 }
 
++ (void)configureWithFirebaseKey:(NSString *)key {
+  if (!key) {
+    [NSException raise:kFirebaseCoreErrorDomain
+                format:@"Firebae key is nil. Please pass a valid Firebase key."];
+  }
+  FIROptions *options = [FIROptions defaultOptionsWithFirebaseKey:key];
+  [FIRApp configureWithOptions:options];
+}
+
 + (NSCharacterSet *)applicationNameAllowedCharacters {
   static NSCharacterSet *applicationNameAllowedCharacters;
   static dispatch_once_t onceToken;
@@ -139,6 +148,11 @@ static FIRApp *sDefaultApp;
   });
   return applicationNameAllowedCharacters;
 }
+
++ (void)configureWithName:(NSString *)name FirebaseKey:(NSString *)key {
+  
+}
+
 
 + (void)configureWithName:(NSString *)name options:(FIROptions *)options {
   if (!name || !options) {
