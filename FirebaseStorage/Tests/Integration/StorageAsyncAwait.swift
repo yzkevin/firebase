@@ -142,8 +142,8 @@ import XCTest
         XCTAssertTrue(reason.hasSuffix(
           "is not reachable. Ensure file URL is not a directory, symbolic link, or invalid url."
         ))
-      } catch {
-        XCTFail("error failed to convert to StorageError.unknown")
+      } catch (let error) {
+        XCTFail("error failed to convert to StorageError.unknown \(error)")
       }
     }
 

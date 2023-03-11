@@ -142,7 +142,7 @@ public let StorageErrorDomain: String = "FIRStorageErrorDomain"
   }
 }
 
-public enum StorageError: Error {
+public enum StorageError: Error, CustomNSError {
   case unknown(String)
   case objectNotFound(String)
   case bucketNotFound(String)
@@ -161,40 +161,39 @@ public enum StorageError: Error {
 
   static func swiftConvert(objcError: NSError) -> StorageError {
     let userInfo = objcError.userInfo
+    var swiftError : StorageError
 
     switch objcError.code {
     case StorageErrorCode.unknown.rawValue:
-      return StorageError.unknown(objcError.localizedDescription)
+      swiftError = StorageError.unknown(objcError.localizedDescription)
     case StorageErrorCode.objectNotFound.rawValue:
-      guard let object = userInfo["object"] as? String else {
-        return StorageError
-          .internalError(
-            "Failed to decode object not found error: \(objcError.localizedDescription)"
-          )
+      if let object = userInfo["object"] as? String {
+        swiftError = StorageError.objectNotFound(object)
+      } else {
+        swiftError = StorageError.internalError(
+          "Failed to decode object not found error: \(objcError.localizedDescription)")
       }
-      return StorageError.objectNotFound(object)
     case StorageErrorCode.bucketNotFound.rawValue:
-      guard let bucket = userInfo["bucket"] as? String else {
-        return StorageError
-          .internalError(
-            "Failed to decode bucket not found error: \(objcError.localizedDescription)"
-          )
+      if let bucket = userInfo["bucket"] as? String {
+        swiftError = StorageError.bucketNotFound(bucket)
+      } else {
+        swiftError = StorageError.internalError(
+          "Failed to decode bucket not found error: \(objcError.localizedDescription)")
       }
-      return StorageError.bucketNotFound(bucket)
     case StorageErrorCode.projectNotFound.rawValue:
-      guard let project = userInfo["project"] as? String else {
-        return StorageError
-          .internalError(
-            "Failed to decode project not found error: \(objcError.localizedDescription)"
-          )
+      if let project = userInfo["project"] as? String {
+        swiftError = StorageError.projectNotFound(project)
+      } else {
+        swiftError = StorageError.internalError(
+          "Failed to decode project not found error: \(objcError.localizedDescription)")
       }
-      return StorageError.projectNotFound(project)
     case StorageErrorCode.quotaExceeded.rawValue:
-      guard let bucket = userInfo["bucket"] as? String else {
-        return StorageError
-          .internalError("Failed to decode quota exceeded error: \(objcError.localizedDescription)")
+      if let bucket = userInfo["bucket"] as? String {
+        swiftError = StorageError.quotaExceeded(bucket)
+      } else {
+        swiftError = StorageError.internalError(
+          "Failed to decode quota exceeded error: \(objcError.localizedDescription)")
       }
-      return StorageError.quotaExceeded(bucket)
     case StorageErrorCode.unauthenticated.rawValue: return StorageError.unauthenticated
     case StorageErrorCode.unauthorized.rawValue:
       guard let bucket = userInfo["bucket"] as? String,
@@ -205,9 +204,10 @@ public enum StorageError: Error {
           )
       }
       return StorageError.unauthorized(bucket, object)
-    case StorageErrorCode.retryLimitExceeded.rawValue: return StorageError.retryLimitExceeded
-    case StorageErrorCode.nonMatchingChecksum.rawValue: return StorageError
-      .nonMatchingChecksum
+    case StorageErrorCode.retryLimitExceeded.rawValue:
+      swiftError = StorageError.retryLimitExceeded
+    case StorageErrorCode.nonMatchingChecksum.rawValue:
+      swiftError = StorageError.nonMatchingChecksum
     case StorageErrorCode.downloadSizeExceeded.rawValue:
       guard let total = userInfo["totalSize"] as? Int64,
             let maxSize = userInfo["maxAllowedSize"] as? Int64 else {
@@ -217,10 +217,21 @@ public enum StorageError: Error {
           )
       }
       return StorageError.downloadSizeExceeded(total, maxSize)
-    case StorageErrorCode.cancelled.rawValue: return StorageError.cancelled
-    case StorageErrorCode.invalidArgument.rawValue: return StorageError
-      .invalidArgument(objcError.localizedDescription)
-    default: return StorageError.internalError("Internal error converting ObjC Error to Swift")
+    case StorageErrorCode.cancelled.rawValue:
+      swiftError = StorageError.cancelled
+    case StorageErrorCode.invalidArgument.rawValue:
+      swiftError = StorageError.invalidArgument(objcError.localizedDescription)
+    default: swiftError = StorageError.internalError("Internal error converting ObjC Error to Swift")
     }
+    swiftError.errorCode = objcError.code
+    swiftError.errorUserInfo = objcError.userInfo
+    swiftError.errorDomain = objcError.domain
+  }
+
+}
+
+extension StorageError{
+  var errorUserInfo: [String: Any] {
+    return (self.error as NSError).userInfo
   }
 }
