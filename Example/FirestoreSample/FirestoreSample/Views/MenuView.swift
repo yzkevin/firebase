@@ -36,6 +36,17 @@ struct MenuView: View {
           Label("With Animations", systemImage: "shippingbox")
         }
       }
+      Section(header: Text("Async")) {
+        NavigationLink(destination: FavouriteFruitsAsyncSequenceView()) {
+          Label("AsyncSequence (Collection)", systemImage: "shippingbox")
+        }
+        NavigationLink(destination: FavouriteFruitsAsyncSequenceViewModelView()) {
+          Label("AsyncSequence (Collection) / view model", systemImage: "shippingbox")
+        }
+        NavigationLink(destination: FavouriteFruitView()) {
+          Label("AsyncSequence (Document)", systemImage: "shippingbox")
+        }
+      }
     }
     .listStyle(InsetGroupedListStyle())
     .navigationTitle("Firestore")
