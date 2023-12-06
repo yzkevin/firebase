@@ -170,21 +170,30 @@ extension Questionnaire {
     let platformDirectories = try! FileManager.default.contentsOfDirectory(
       at: xcframework,
       includingPropertiesForKeys: [.isDirectoryKey]
-    )
-    let platformDirectory = platformDirectories.first!
+    ).filter { directoryURL in
+      directoryURL.lastPathComponent.contains("arm64") ||
+        directoryURL.lastPathComponent.contains("x86_64")
+    }
+
     let frameworkName = (xcframework.lastPathComponent as NSString).deletingPathExtension
-    let staticLibrary = platformDirectory.appendingPathComponents([
-      "\(frameworkName).framework",
-      frameworkName,
-    ])
 
     let accessedAPISection = Questionnaire.Section(
       questions: AccessedAPIType.Category.allCases
         .compactMap { category in
           let searchString = "'\(category.associatedSymbols.joined(separator: #"\|"#))'"
 
+          let staticLibraries = platformDirectories
+            .map {
+              $0.appendingPathComponents([
+                "\(frameworkName).framework",
+                frameworkName
+              ])
+            }
+
+          let nmCommands = staticLibraries.map { "nm \($0.path)" }
+
           let result = Shell.executeCommandFromScript(
-            "nm \(staticLibrary.path) | grep \(searchString)",
+            "{ \(nmCommands.joined(separator: "&&")); } | grep \(searchString)",
             outputToConsole: false
           )
 

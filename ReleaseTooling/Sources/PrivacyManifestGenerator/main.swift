@@ -42,9 +42,13 @@ struct PrivacyManifestGenerator: ParsableCommand {
     }
 
     let privacyManifest = try wizard.createManifest()
-    print(privacyManifest)
 
     // TODO(ncooke3): Implement options to configure what to do with manifest.
+
+    let encoder = PropertyListEncoder()
+    encoder.outputFormat = .xml
+    let data = try encoder.encode(privacyManifest)
+    print(String(data: data, encoding: .utf8)!)
   }
 }
 
