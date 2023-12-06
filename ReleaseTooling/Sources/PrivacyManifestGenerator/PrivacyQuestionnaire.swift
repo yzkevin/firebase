@@ -167,10 +167,12 @@ extension Questionnaire {
 
     // TODO(ncooke3): Wrap next few lines in proper error and document that
     // platform specific privacy manifests are not really supported in this CLI.
+    // The platformDirectories should be non-nil...
     let platformDirectories = try! FileManager.default.contentsOfDirectory(
       at: xcframework,
       includingPropertiesForKeys: [.isDirectoryKey]
     ).filter { directoryURL in
+      // Assume all platform directories will be for `arm64` and/or `x86_64`.
       directoryURL.lastPathComponent.contains("arm64") ||
         directoryURL.lastPathComponent.contains("x86_64")
     }
@@ -182,25 +184,28 @@ extension Questionnaire {
         .compactMap { category in
           let searchString = "'\(category.associatedSymbols.joined(separator: #"\|"#))'"
 
-          let staticLibraries = platformDirectories
-            .map {
-              $0.appendingPathComponents([
-                "\(frameworkName).framework",
-                frameworkName
-              ])
+          let output: String = platformDirectories.compactMap { libraryURL in
+            let platformLibraryURL = libraryURL.appendingPathComponents([
+              "\(frameworkName).framework",
+              frameworkName
+            ])
+
+            let result = Shell.executeCommandFromScript(
+              "nm \(platformLibraryURL.path) | grep \(searchString)",
+              outputToConsole: false
+            )
+
+            guard case let .success(output) = result else {
+              // This static library contains no symbols in the restricted API category.
+              return nil
             }
 
-          let nmCommands = staticLibraries.map { "nm \($0.path)" }
+            return """
+            >>>>>>>>>> \(libraryURL.lastPathComponent) <<<<<<<<<<
+            \(output)
 
-          let result = Shell.executeCommandFromScript(
-            "{ \(nmCommands.joined(separator: "&&")); } | grep \(searchString)",
-            outputToConsole: false
-          )
-
-          guard case let .success(output) = result else {
-            // The static library contains no symbols in the restricted API category.
-            return nil
-          }
+            """
+          }.joined(separator: "\n")
 
           let associatedSymbolsList = category.associatedSymbols.enumerated()
             .reduce("") { partialResult, enumeration in
