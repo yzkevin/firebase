@@ -184,7 +184,7 @@ extension Questionnaire {
         .compactMap { category in
           let searchString = "'\(category.associatedSymbols.joined(separator: #"\|"#))'"
 
-          let output: String = platformDirectories.compactMap { libraryURL in
+          let output: [String] = platformDirectories.compactMap { libraryURL in
             let platformLibraryURL = libraryURL.appendingPathComponents([
               "\(frameworkName).framework",
               frameworkName
@@ -196,7 +196,7 @@ extension Questionnaire {
             )
 
             guard case let .success(output) = result else {
-              // This static library contains no symbols in the restricted API category.
+              // The arch's static library does not contain symbols in the restricted API category.
               return nil
             }
 
@@ -205,7 +205,12 @@ extension Questionnaire {
             \(output)
 
             """
-          }.joined(separator: "\n")
+          }
+
+          guard output.count > 0 else {
+            // This static library contains no symbols in the restricted API category.
+            return nil
+          }
 
           let associatedSymbolsList = category.associatedSymbols.enumerated()
             .reduce("") { partialResult, enumeration in
@@ -231,7 +236,7 @@ extension Questionnaire {
               \(category.description) API category:
 
             ```
-            \(output)
+            \(output.joined(separator: "\n"))
             ```
 
             If the above output contains symbols from the below list
