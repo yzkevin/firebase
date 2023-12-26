@@ -106,18 +106,18 @@ public struct PrivacyManifest: Encodable {
     public init() {}
 
     public func build() throws -> PrivacyManifest {
-      guard
-        let usesDataForTracking = usesDataForTracking,
-        let trackingDomains = trackingDomains,
-        let collectedDataTypes = try? collectedDataTypes.map({ try $0.build() })
-      else {
-        throw BuilderError.missingField
-      }
+//      guard
+//        let usesDataForTracking = usesDataForTracking,
+//        let trackingDomains = trackingDomains,
+//        let collectedDataTypes = try? collectedDataTypes.map({ try $0.build() })
+//      else {
+//        throw BuilderError.missingField
+//      }
 
       return PrivacyManifest(
-        usesDataForTracking: usesDataForTracking,
-        trackingDomains: trackingDomains,
-        collectedDataTypes: collectedDataTypes,
+        usesDataForTracking: true,
+        trackingDomains: [],
+        collectedDataTypes: [],
         accessedAPITypes: accessedAPITypes
       )
     }

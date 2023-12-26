@@ -282,7 +282,7 @@ extension Questionnaire {
     )
 
     return Questionnaire(
-      sections: [trackingSection] + dataCollectionSections + [accessedAPISection]
+      sections: /*[trackingSection] + dataCollectionSections +*/ [accessedAPISection]
     )
   }
 }
