@@ -256,7 +256,8 @@ extension CarthageUtils {
                                    "CFBundleVersion": ver,
                                    "DTSDKName": "iphonesimulator11.2",
                                    "CFBundleExecutable": name,
-                                   "CFBundleName": name]
+                                   "CFBundleName": name,
+                                   "CFBundleShortVersionString": ver]
 
     // Generate the data for an XML based plist.
     let encoder = PropertyListEncoder()
