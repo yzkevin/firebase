@@ -27,6 +27,7 @@ extension Questionnaire {
   ///   - builder: The Privacy Manifest builder to mutate in each question's answer handler closure.
   /// - Returns: A questionnaire that can be used to generate a Privacy Manifest.
   static func makePrivacyQuestionnaire(for xcframework: URL,
+                                       onlyAuditProtectedAPI: Bool,
                                        with builder: PrivacyManifest.Builder) -> Self {
     let trackingSection = Questionnaire.Section(
       questions: [
@@ -281,8 +282,14 @@ extension Questionnaire {
         }
     )
 
-    return Questionnaire(
-      sections: /*[trackingSection] + dataCollectionSections +*/ [accessedAPISection]
-    )
+    if onlyAuditProtectedAPI {
+      return Questionnaire(
+        sections: [accessedAPISection]
+      )
+    } else {
+      return Questionnaire(
+        sections: [trackingSection] + dataCollectionSections + [accessedAPISection]
+      )
+    }
   }
 }

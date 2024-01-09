@@ -21,10 +21,14 @@ final class PrivacyManifestWizard {
   private let builder: PrivacyManifest.Builder
   private var questionnaire: Questionnaire
 
-  static func makeWizard(xcframework: URL) -> Self {
+  static func makeWizard(
+    xcframework: URL,
+    onlyAuditProtectedAPI: Bool
+  ) -> Self {
     let builder = PrivacyManifest.Builder()
     let privacyQuestionnaire = Questionnaire.makePrivacyQuestionnaire(
       for: xcframework,
+      onlyAuditProtectedAPI: onlyAuditProtectedAPI,
       with: builder
     )
     return Self(builder: builder, questionnaire: privacyQuestionnaire)

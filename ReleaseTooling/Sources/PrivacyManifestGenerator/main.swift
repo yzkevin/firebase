@@ -22,6 +22,10 @@ struct PrivacyManifestGenerator: ParsableCommand {
   )
   var xcframework: URL
 
+  @Option(default: false,
+          help: "Whether to only audit the required reason API. Defaults to false.")
+  var onlyAuditProtectedAPI: Bool
+
   func validate() throws {
     guard xcframework.pathExtension == "xcframework" else {
       throw ValidationError("Given path does not end in `.xcframework`: \(xcframework.path)")
@@ -29,7 +33,10 @@ struct PrivacyManifestGenerator: ParsableCommand {
   }
 
   func run() throws {
-    let wizard = PrivacyManifestWizard.makeWizard(xcframework: xcframework)
+    let wizard = PrivacyManifestWizard.makeWizard(
+      xcframework: xcframework,
+      onlyAuditProtectedAPI: onlyAuditProtectedAPI
+    )
 
     while let question = wizard.nextQuestion() {
       print(question)
