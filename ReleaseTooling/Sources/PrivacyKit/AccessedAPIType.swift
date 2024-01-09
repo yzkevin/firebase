@@ -61,7 +61,8 @@ public struct AccessedAPIType: Encodable {
           "getattrlist",
           "getattrlistbulk",
           "fgetattrlist",
-          "stat",
+          // Helps reduce false positives like "status".
+          #"_stat\b"#,
           "fstat",
           "fstatat",
           "lstat",
@@ -71,6 +72,24 @@ public struct AccessedAPIType: Encodable {
           "fileModificationDate",
           "contentModificationDateKey",
           "creationDateKey",
+          // Below all have to do with `_stat`
+          "st_atimespec",
+          "st_blksize",
+          "st_blocks",
+          "st_ctimespec",
+          "st_dev",
+          "st_flags",
+          "st_gen",
+          "st_gid",
+          "st_ino",
+          "st_lspare",
+          "st_mode",
+          "st_mtimespec",
+          "st_nlink",
+          "st_qspare",
+          "st_rdev",
+          "st_size",
+          "st_uid"
         ]
       case .systemBootTime:
         return [
@@ -102,7 +121,8 @@ public struct AccessedAPIType: Encodable {
       case .activeKeyboards:
         return ["activeInputModes"]
       case .userDefaults:
-        return ["NSUserDefaults", "UserDefaults"]
+        // `NSUserDefaults` will be symbolically linked for Swift libraries.
+        return ["NSUserDefaults"]
       }
     }
   }
