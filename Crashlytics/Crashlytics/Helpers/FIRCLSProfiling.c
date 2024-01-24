@@ -14,15 +14,15 @@
 
 #include "Crashlytics/Crashlytics/Helpers/FIRCLSProfiling.h"
 
-#include <mach/mach_time.h>
+#include <time.h>
 #include <stdio.h>
 
 FIRCLSProfileMark FIRCLSProfilingStart(void) {
-  return mach_absolute_time();
+  return clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
 }
 
 double FIRCLSProfileEnd(FIRCLSProfileMark mark) {
-  uint64_t duration = mach_absolute_time() - mark;
+  uint64_t duration = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) - mark;
 
   mach_timebase_info_data_t info;
   mach_timebase_info(&info);
