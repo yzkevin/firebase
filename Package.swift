@@ -1052,7 +1052,8 @@ let package = Package(
         .product(name: "GoogleDataTransport", package: "GoogleDataTransport"),
         .product(name: "GULEnvironment", package: "GoogleUtilities"),
       ],
-      path: "FirebaseSessions/Sources",
+      path: "FirebaseSessions/Sources/",
+      resources: [.process("Resources/PrivacyInfo.xcprivacy")],
       cSettings: [
         .headerSearchPath(".."),
         .define("DISPLAY_VERSION", to: firebaseVersion),

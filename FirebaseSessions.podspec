@@ -38,6 +38,9 @@ Pod::Spec.new do |s|
     base_dir + 'Sources/**/*.{swift}',
     base_dir + 'SourcesObjC/**/*.{c,h,m,mm}',
   ]
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseSessions/Sources/Resources/PrivacyInfo.xcprivacy'
+  }
 
   s.dependency 'FirebaseCore', '~> 10.5'
   s.dependency 'FirebaseCoreExtension', '~> 10.0'
