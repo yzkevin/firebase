@@ -52,6 +52,7 @@ static void FIRCLSHostWriteOSVersionInfo(FIRCLSFile* file);
 void FIRCLSHostInitialize(FIRCLSHostReadOnlyContext* roContext) {
   _firclsContext.readonly->host.pageSize = FIRCLSHostGetPageSize();
   _firclsContext.readonly->host.documentDirectoryPath = NULL;
+  _firclsContext.readonly->host.diskSpaceFunction = diskSpaceFunction;
 
   // determine where the document directory is mounted, so we can get file system statistics later
   NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
@@ -186,12 +187,20 @@ void FIRCLSHostWriteDiskUsage(FIRCLSFile* file) {
 
   FIRCLSFileWriteHashStart(file);
 
-  if (statfs(_firclsContext.readonly->host.documentDirectoryPath, &tStats) == 0) {
+  // Developers can optionally supply a function pointer to statfs
+  // that we can use here. Otherwise, set the disk space to 0 so the backend
+  // knows to hide this field in the crash report.
+  if (_firclsContext.readonly->host.diskSpaceFunction &&
+      _firclsContext.readonly->host.diskSpaceFunction(_firclsContext.readonly->host.documentDirectoryPath, &tStats) == 0) {
     FIRCLSFileWriteHashEntryUint64(file, "free", tStats.f_bavail * tStats.f_bsize);
     FIRCLSFileWriteHashEntryUint64(file, "total", tStats.f_blocks * tStats.f_bsize);
+  } else {
+    FIRCLSFileWriteHashEntryUint64(file, "free", 0);
+    FIRCLSFileWriteHashEntryUint64(file, "total", 0);
   }
 
   FIRCLSFileWriteHashEnd(file);
 
   FIRCLSFileWriteSectionEnd(file);
 }
+
