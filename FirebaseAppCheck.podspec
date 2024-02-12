@@ -34,6 +34,10 @@ Pod::Spec.new do |s|
 
   base_dir = "FirebaseAppCheck/"
 
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseAppCheck/Sources/Resources/PrivacyInfo.xcprivacy'
+  }
+
   s.source_files = [
     base_dir + 'Sources/**/*.[mh]',
     'FirebaseCore/Extension/*.h',

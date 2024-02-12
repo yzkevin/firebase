@@ -1241,6 +1241,7 @@ let package = Package(
               .product(name: "GULEnvironment", package: "GoogleUtilities"),
             ],
             path: "FirebaseAppCheck/Sources",
+            resources: [.process("Resources/PrivacyInfo.xcprivacy")],
             publicHeadersPath: "Public",
             cSettings: [
               .headerSearchPath("../.."),
