@@ -41,6 +41,11 @@ Simplify your iOS development, grow your user base, and monetize more effectivel
     'FirebaseAuth/Interop/*.h',
     'FirebaseCore/Extension/*.h',
   ]
+
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseDatabase/Sources/Resources/PrivacyInfo.xcprivacy'
+  }
+
   s.public_header_files = base_dir + 'Public/FirebaseDatabase/*.h'
   s.libraries = ['c++', 'icucore']
   s.ios.frameworks = 'CFNetwork', 'Security', 'SystemConfiguration'

@@ -573,6 +573,7 @@ let package = Package(
         "leveldb",
       ],
       path: "FirebaseDatabase/Sources",
+      resources: [.process("Resources/PrivacyInfo.xcprivacy")],
       exclude: [
         "third_party/Wrap-leveldb/LICENSE",
         "third_party/SocketRocket/LICENSE",
