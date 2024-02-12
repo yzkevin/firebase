@@ -25,6 +25,10 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target = '12.0'
   s.watchos.deployment_target = '6.0'
 
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseAuth/Interop/Resources/PrivacyInfo.xcprivacy'
+  }
+
   s.source_files = 'FirebaseAuth/Interop/*.[hm]'
   s.public_header_files = 'FirebaseAuth/Interop/*.h'
 end

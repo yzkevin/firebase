@@ -449,6 +449,7 @@ let package = Package(
     .target(
       name: "FirebaseAuthInterop",
       path: "FirebaseAuth/Interop",
+      resources: [.process("Resources/PrivacyInfo.xcprivacy")],
       exclude: [
         "CMakeLists.txt",
       ],
