@@ -697,7 +697,8 @@ let package = Package(
         "FirebaseSharedSwift",
         .product(name: "GTMSessionFetcherCore", package: "gtm-session-fetcher"),
       ],
-      path: "FirebaseFunctions/Sources"
+      path: "FirebaseFunctions/Sources",
+      resources: [.process("Resources/PrivacyInfo.xcprivacy")]
     ),
     .testTarget(
       name: "FirebaseFunctionsUnit",

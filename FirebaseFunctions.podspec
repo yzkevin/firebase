@@ -37,6 +37,10 @@ Cloud Functions for Firebase.
     'FirebaseFunctions/Sources/**/*.swift',
   ]
 
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseFunctions/Sources/Resources/PrivacyInfo.xcprivacy'
+  }
+
   s.dependency 'FirebaseCore', '~> 10.0'
   s.dependency 'FirebaseCoreExtension', '~> 10.0'
   s.dependency 'FirebaseAppCheckInterop', '~> 10.10'
