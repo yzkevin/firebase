@@ -65,6 +65,10 @@ See more product details at https://firebase.google.com/products/in-app-messagin
 
   s.public_header_files = base_dir + 'Sources/Public/FirebaseInAppMessaging/*.h'
 
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseInAppMessaging/Sources/Resources/PrivacyInfo.xcprivacy'
+  }
+
   s.ios.resource_bundles = {
     'InAppMessagingDisplayResources' => [
        base_dir + 'iOS/Resources/*.{storyboard,png}',

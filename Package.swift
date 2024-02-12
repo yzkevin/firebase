@@ -764,6 +764,7 @@ let package = Package(
         .target(name: "FirebaseInAppMessaging_iOS", condition: .when(platforms: [.iOS])),
       ],
       path: "FirebaseInAppMessaging/Sources",
+      resources: [.process("Resources/PrivacyInfo.xcprivacy")],
       exclude: [
         "DefaultUI/CHANGELOG.md",
         "DefaultUI/README.md",
