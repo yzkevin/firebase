@@ -19,6 +19,11 @@ Pod::Spec.new do |s|
     :git => 'https://github.com/firebase/firebase-ios-sdk.git',
     :tag => 'CocoaPods-' + s.version.to_s
   }
+
+  s.resource_bundles = {
+    "#{s.module_name}_Privacy" => 'FirebaseAppCheck/Interop/Resources/PrivacyInfo.xcprivacy'
+  }
+
   s.social_media_url = 'https://twitter.com/Firebase'
   s.ios.deployment_target = '10.0'
   s.osx.deployment_target = '10.13'

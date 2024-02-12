@@ -1256,6 +1256,7 @@ let package = Package(
     .target(
       name: "FirebaseAppCheckInterop",
       path: "FirebaseAppCheck/Interop",
+      resources: [.process("Resources/PrivacyInfo.xcprivacy")],
       exclude: [
         "CMakeLists.txt",
       ],
