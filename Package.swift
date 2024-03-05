@@ -160,7 +160,7 @@ let package = Package(
     .package(
       name: "GoogleUtilities",
       url: "https://github.com/google/GoogleUtilities.git",
-      "7.9.0" ..< "8.0.0"
+      branch: "nc/remove-dash"
     ),
     .package(
       name: "GTMSessionFetcher",
