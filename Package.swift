@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 // The swift-tools-version declares the minimum version of Swift required to
 // build this package.
 
@@ -158,7 +158,6 @@ let package = Package(
       "9.2.0" ..< "10.0.0"
     ),
     .package(
-      name: "GoogleUtilities",
       url: "https://github.com/google/GoogleUtilities.git",
       branch: "nc/remove-dash"
     ),
