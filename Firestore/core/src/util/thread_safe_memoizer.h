@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <mutex>  // NOLINT(build/c++11)
+#include <type_traits>
 #include <vector>
 
 namespace firebase {
@@ -37,18 +38,25 @@ class ThreadSafeMemoizer {
   ThreadSafeMemoizer() = default;
 
   ~ThreadSafeMemoizer() {
-    // Call `std::call_once` in order to synchronize with the "active"
+    // Acquire and release the mutex in order to synchronize with the "active"
     // invocation of `memoize()`. Without this synchronization, there is a data
     // race between this destructor, which "reads" `memoized_value_` to destroy
-    // it, and the write to `memoized_value_` done by the "active" invocation of
-    // `memoize()`.
-    std::call_once(once_, [&]() {});
+    // it, and then write to `memoized_value_` done by the "active" invocation
+    // of `memoize()`.
+    std::lock_guard<std::mutex> lock(mutex_);
   }
 
-  // This class cannot be copied or moved, because it has `std::once_flag`
-  // member.
-  ThreadSafeMemoizer(const ThreadSafeMemoizer&) = delete;
-  ThreadSafeMemoizer(ThreadSafeMemoizer&&) = delete;
+  ThreadSafeMemoizer(const ThreadSafeMemoizer& other) {
+    std::lock_guard<std::mutex> lock(other.mutex_);
+    memoized_value_ = other.memoized_value_;
+  }
+
+  ThreadSafeMemoizer(ThreadSafeMemoizer&& other) {
+    static_assert(std::is_nothrow_move_constructible<T>::value, "");
+    std::lock_guard<std::mutex> lock(other.mutex_);
+    memoized_value_ = std::move(other.memoized_value_);
+  }
+
   ThreadSafeMemoizer& operator=(const ThreadSafeMemoizer&) = delete;
   ThreadSafeMemoizer& operator=(ThreadSafeMemoizer&&) = delete;
 
@@ -66,13 +74,16 @@ class ThreadSafeMemoizer {
    * to memoize.
    */
   const T& memoize(std::function<T()> func) {
-    std::call_once(once_, [&]() { memoized_value_ = func(); });
-    return memoized_value_;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!memoized_value_.has_value()) {
+      memoized_value_ = func();
+    }
+    return memoized_value_.value();
   }
 
  private:
-  std::once_flag once_;
-  T memoized_value_;
+  mutable std::mutex mutex_;
+  absl::optional<T> memoized_value_;
 };
 
 }  // namespace util

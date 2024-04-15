@@ -131,7 +131,7 @@ MutationBatch::MutationByDocumentKeyMap MutationBatch::ApplyToLocalDocumentSet(
     // and we should remove this cast.
     auto& document = const_cast<MutableDocument&>(it->second.document().get());
     auto mutated_fields =
-        ApplyToLocalDocument(document, std::move(it->second.mutated_fields()));
+        ApplyToLocalDocument(document, it->second.mutated_fields());
     absl::optional<Mutation> overlay =
         Mutation::CalculateOverlayMutation(document, mutated_fields);
     if (overlay.has_value()) {

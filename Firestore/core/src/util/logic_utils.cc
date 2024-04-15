@@ -92,7 +92,7 @@ Filter LogicUtils::ApplyAssociation(const Filter& filter) {
 
   // Associativity applied to a flat composite filter results in itself.
   if (composite_filter.IsFlat()) {
-    return std::move(composite_filter);
+    return composite_filter;
   }
 
   // First apply associativity to all subfilters. This will in turn recursively
