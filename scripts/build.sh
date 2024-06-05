@@ -300,6 +300,16 @@ case "$product-$platform-$method" in
         build
     ;;
 
+  Auth-*-multiplatform)
+    if check_secrets; then
+      RunXcodebuild \
+        -project 'FirebaseAuth/Tests/MultiPlatformSample/MultiPlatformSample.xcodeproj' \
+        -scheme "MultiPlatformSample" \
+        "${xcb_flags[@]}" \
+        build
+    fi
+    ;;
+
   Auth-*-xcodebuild)
     if check_secrets; then
       RunXcodebuild \
