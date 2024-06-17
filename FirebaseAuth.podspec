@@ -42,7 +42,7 @@ supports email and password accounts, as well as several 3rd party authenticatio
   ]
   s.public_header_files = source + 'Public/FirebaseAuth/*.h'
   s.resource_bundles = {
-    "#{s.module_name}_Privacy" => 'FirebaseAuth/Sources/Resources/PrivacyInfo.xcprivacy'
+    "#{s.module_name}_Privacy" => 'FirebaseAuth/Sources/Swift/Resources/PrivacyInfo.xcprivacy'
   }
   s.preserve_paths = [
     'FirebaseAuth/README.md',
