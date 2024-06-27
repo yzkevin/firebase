@@ -88,9 +88,7 @@ ASWebAuthenticationSession *_webAuthenticationVC;
         completion(appDistributionError);
       }];
 
-  if (@available(iOS 13.0, *)) {
-    authenticationVC.presentationContextProvider = self;
-  }
+  authenticationVC.presentationContextProvider = self;
 
   _webAuthenticationVC = authenticationVC;
 
@@ -164,30 +162,26 @@ ASWebAuthenticationSession *_webAuthenticationVC;
     return;
   }
 
-  if (@available(iOS 13.0, *)) {
-    UIWindowScene *foregroundedScene = nil;
-    for (UIWindowScene *connectedScene in [UIApplication sharedApplication].connectedScenes) {
-      if (connectedScene.activationState == UISceneActivationStateForegroundActive) {
-        foregroundedScene = connectedScene;
-        break;
-      }
+  UIWindowScene *foregroundedScene = nil;
+  for (UIWindowScene *connectedScene in [UIApplication sharedApplication].connectedScenes) {
+    if (connectedScene.activationState == UISceneActivationStateForegroundActive) {
+      foregroundedScene = connectedScene;
+      break;
     }
+  }
 
-    if (foregroundedScene) {
-      self.window = [[UIWindow alloc] initWithWindowScene:foregroundedScene];
-    } else if ([UIApplication sharedApplication].connectedScenes.count == 1) {
-      // There are situations where a scene isn't considered foreground in viewDidAppear
-      // and this fixes the issue in single scene apps.
-      // https://github.com/firebase/firebase-ios-sdk/issues/8096
-      UIWindowScene *scene =
-          (UIWindowScene *)[UIApplication sharedApplication].connectedScenes.anyObject;
-      self.window = [[UIWindow alloc] initWithWindowScene:scene];
-    } else {
-      // TODO: Consider using UISceneDidActivateNotification.
-      FIRFADInfoLog(@"No foreground scene found.");
-      self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    }
+  if (foregroundedScene) {
+    self.window = [[UIWindow alloc] initWithWindowScene:foregroundedScene];
+  } else if ([UIApplication sharedApplication].connectedScenes.count == 1) {
+    // There are situations where a scene isn't considered foreground in viewDidAppear
+    // and this fixes the issue in single scene apps.
+    // https://github.com/firebase/firebase-ios-sdk/issues/8096
+    UIWindowScene *scene =
+        (UIWindowScene *)[UIApplication sharedApplication].connectedScenes.anyObject;
+    self.window = [[UIWindow alloc] initWithWindowScene:scene];
   } else {
+    // TODO: Consider using UISceneDidActivateNotification.
+    FIRFADInfoLog(@"No foreground scene found.");
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
   }
   self.window.rootViewController = self.safariHostingViewController;
