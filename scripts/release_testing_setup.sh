@@ -24,10 +24,10 @@ fi
 
 # Fetch `main` as it may not be checked out by default (e.g. for PRs), and is
 # needed for the following command.
-git fetch origin main
+git fetch origin main --tags
 # The chunk below is to determine the latest version by searching
 # Get the latest released tag Cocoapods-X.Y.Z for release and prerelease testing, beta version will be excluded.
-test_version=$(git tag -l --sort=-version:refname --merged origin/main CocoaPods-*[0-9] | head -n 1)
+test_version=$(git tag -l --sort=-version:refname --merged origin/main 'CocoaPods-*[0-9]' | head -n 1)
 
 if [ -z "$test_version" ]; then
   echo "`test_version` is empty. Exiting..."
