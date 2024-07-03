@@ -34,6 +34,7 @@ jobs:
     - name: Generate matrix
       id: generate_matrix
       run: |
+        pwd
         cd "${GITHUB_WORKSPACE}/ReleaseTooling"
         swift run manifest --sdk-repo-url "${GITHUB_WORKSPACE}" --output-file-path ./output.json --for-gha-matrix-generation
         echo "::set-output name=matrix::{\"include\":$( cat output.json )}"

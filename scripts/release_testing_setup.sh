@@ -18,6 +18,8 @@ set -xe
 
 TESTINGMODE=${1-}
 
+echo "${#BOT_TOKEN}"
+
 if [ -f "${HOME}/.cocoapods/repos" ]; then
   find "${HOME}/.cocoapods/repos" -type d -maxdepth 1 -exec sh -c 'pod repo remove $(basename {})' \;
 fi
