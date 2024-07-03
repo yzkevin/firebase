@@ -67,8 +67,8 @@ jobs:
       with:
         name: firebase-ios-sdk
         path: |
-          ${GITHUB_WORKSPACE}/*.podspec
-          ${GITHUB_WORKSPACE}/*.podspec.json
+          *.podspec
+          *.podspec.json
   buildup_SpecsTesting_repo_FirebaseCore:
     needs: specs_checking
     # Don't run on private repo unless it is a PR.
