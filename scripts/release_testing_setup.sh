@@ -23,7 +23,7 @@ if [ -f "${HOME}/.cocoapods/repos" ]; then
 fi
 
 echo "$PWD"
-tree .
+ls
 
 # The chunk below is to determine the latest version by searching
 # Get the latest released tag Cocoapods-X.Y.Z for release and prerelease testing, beta version will be excluded.
