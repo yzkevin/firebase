@@ -33,7 +33,7 @@ RELEASE_TESTING=${2-}
 WORKSPACE_DIR="quickstart-ios/${SAMPLE}"
 PODFILE="quickstart-ios/"$SAMPLE"/Podfile"
 
-if [[ ! -z "${LEGACY:-}" ]]; then
+if [[ "${LEGACY:-}" != "true" ]]; then
   WORKSPACE_DIR="quickstart-ios/${SAMPLE}/Legacy${SAMPLE}Quickstart"
   PODFILE="quickstart-ios/"$SAMPLE"/Legacy${SAMPLE}Quickstart/Podfile"
 fi
