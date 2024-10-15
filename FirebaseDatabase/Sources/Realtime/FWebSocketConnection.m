@@ -366,13 +366,24 @@ static NSString *const kGoogleAppIDHeader = @"X-Firebase-GMPID";
     if (@available(iOS 13.0, macOS 10.15, macCatalyst 13.1, tvOS 13.0,
                    watchOS 6.0, *)) {
         // Use built-in URLSessionWebSocket functionality.
+        NSURLSessionWebSocketMessage *message =
+            [[NSURLSessionWebSocketMessage alloc] initWithString:string];
         [self.webSocketTask
-                  sendMessage:[[NSURLSessionWebSocketMessage alloc]
-                                  initWithString:string]
+                  sendMessage:message
             completionHandler:^(NSError *_Nullable error) {
               if (error) {
-                  FFWarn(@"I-RDB083016", @"Error sending web socket data: %@.",
+                  FFWarn(@"I-RDB083016",
+                         @"Error sending web socket data: %@. Retrying once.",
                          error);
+                  [self.webSocketTask
+                            sendMessage:message
+                      completionHandler:^(NSError *_Nullable error) {
+                        if (error) {
+                            FFWarn(@"I-RDB083016",
+                                   @"Error sending web socket data: %@.",
+                                   error);
+                        }
+                      }];
                   return;
               }
             }];
