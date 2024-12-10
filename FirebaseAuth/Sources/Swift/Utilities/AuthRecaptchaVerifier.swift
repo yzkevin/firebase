@@ -68,28 +68,12 @@
 
   @available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
   class AuthRecaptchaVerifier {
-    private(set) weak var auth: Auth?
-    private(set) var agentConfig: AuthRecaptchaConfig?
-    private(set) var tenantConfigs: [String: AuthRecaptchaConfig] = [:]
-    private(set) var recaptchaClient: RCARecaptchaClientProtocol?
-    private static var _shared = AuthRecaptchaVerifier()
+    weak var auth: Auth?
+    private var agentConfig: AuthRecaptchaConfig?
+    private var tenantConfigs: [String: AuthRecaptchaConfig] = [:]
+    private var recaptchaClient: RCARecaptchaClientProtocol?
     private let kRecaptchaVersion = "RECAPTCHA_ENTERPRISE"
     init() {}
-
-    class func shared(auth: Auth?) -> AuthRecaptchaVerifier {
-      if _shared.auth != auth {
-        _shared.agentConfig = nil
-        _shared.tenantConfigs = [:]
-        _shared.auth = auth
-      }
-      return _shared
-    }
-
-    /// This function is only for testing.
-    class func setShared(_ instance: AuthRecaptchaVerifier, auth: Auth?) {
-      _shared = instance
-      _ = shared(auth: auth)
-    }
 
     func siteKey() -> String? {
       if let tenantID = auth?.tenantID {
@@ -125,7 +109,6 @@
         // No recaptcha on internal build system.
         return actionString
       #else
-
         let (token, error, linked, actionCreated) = await recaptchaToken(
           siteKey: siteKey,
           actionString: actionString,
@@ -154,8 +137,6 @@
       #endif // !(COCOAPODS || SWIFT_PACKAGE)
     }
 
-    private static var recaptchaClient: (any RCARecaptchaClientProtocol)?
-
     private func recaptchaToken(siteKey: String,
                                 actionString: String,
                                 fakeToken: String) async -> (token: String, error: Error?,
@@ -171,6 +152,8 @@
       if let recaptcha =
         NSClassFromString("RecaptchaEnterprise.RCARecaptcha") as? RCARecaptchaProtocol.Type {
         do {
+          // Note, reCAPTCHA does not support multi-tenancy, so only one site key can be used per
+          // runtime.
           // let client = try await recaptcha.fetchClient(withSiteKey: siteKey)
           let client = try await recaptcha.getClient(withSiteKey: siteKey)
           recaptchaClient = client
