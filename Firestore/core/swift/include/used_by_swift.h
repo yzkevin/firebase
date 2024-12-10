@@ -18,10 +18,14 @@
 #define FIREBASE_USED_BY_SWIFT_H
 
 #include <string>
+#include "../../include/firebase/firestore/timestamp.h"
 
+namespace firebase {
 class CppInterfaceCalledBySwift {
  public:
   static void print(std::string content);
+  static void printTime(Timestamp time);
 };
 
+}  // namespace firebase
 #endif  // FIREBASE_USED_BY_SWIFT_H
