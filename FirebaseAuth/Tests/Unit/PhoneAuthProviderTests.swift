@@ -102,7 +102,10 @@
      @brief Tests a successful invocation of @c verifyPhoneNumber with recaptcha enterprise enforced
      */
     func testVerifyPhoneNumberWithRceEnforceSuccess() async throws {
-      initApp(#function, mockRecaptchaVerifier: FakeAuthRecaptchaVerifier(captchaResponse: kCaptchaResponse))
+      initApp(
+        #function,
+        mockRecaptchaVerifier: FakeAuthRecaptchaVerifier(captchaResponse: kCaptchaResponse)
+      )
       let auth = try XCTUnwrap(PhoneAuthProviderTests.auth)
       // TODO: Figure out how to mock objective C's FIRRecaptchaGetToken response
       let provider = PhoneAuthProvider.provider(auth: auth)
@@ -205,7 +208,10 @@
     /// @brief Tests a successful invocation of @c verifyPhoneNumber with recaptcha enterprise in
     /// audit mode
     func testVerifyPhoneNumberWithRceAuditSuccess() async throws {
-      initApp(#function, mockRecaptchaVerifier: FakeAuthRecaptchaVerifier(captchaResponse: kCaptchaResponse))
+      initApp(
+        #function,
+        mockRecaptchaVerifier: FakeAuthRecaptchaVerifier(captchaResponse: kCaptchaResponse)
+      )
       let auth = try XCTUnwrap(PhoneAuthProviderTests.auth)
       let provider = PhoneAuthProvider.provider(auth: auth)
       rpcIssuer.rceMode = "AUDIT"
@@ -857,7 +863,11 @@
         .replacingOccurrences(of: ")", with: "")
       FirebaseApp.configure(name: strippedName, options: options)
       let auth = if let mockRecaptchaVerifier {
-        Auth(app: FirebaseApp.app(name: strippedName)!, backend: authBackend)
+        Auth(
+          app: FirebaseApp.app(name: strippedName)!,
+          backend: authBackend,
+          recaptchaVerifier: mockRecaptchaVerifier
+        )
       } else {
         Auth(app: FirebaseApp.app(name: strippedName)!, backend: authBackend)
       }
