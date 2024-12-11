@@ -1293,6 +1293,8 @@ extension Auth: AuthInterop {
     return false
   }
 
+  let recaptchaVerifier: AuthRecaptchaVerifier
+
   #if os(iOS) && !targetEnvironment(macCatalyst)
 
     /// Initializes reCAPTCHA using the settings configured for the project or tenant.
@@ -1314,8 +1316,6 @@ extension Auth: AuthInterop {
         }
       }
     }
-
-    let recaptchaVerifier: AuthRecaptchaVerifier
 
     /// Initializes reCAPTCHA using the settings configured for the project or tenant.
     ///

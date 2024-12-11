@@ -18,11 +18,9 @@ import Foundation
   import FirebaseAuthInternal
 #endif
 
-#if os(iOS)
-  import RecaptchaInterop
-#endif
+import RecaptchaInterop
 
-@available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
+@available(iOS 13, *)
 class AuthRecaptchaConfig {
   var siteKey: String?
   let enablementStatus: [AuthRecaptchaProvider: AuthRecaptchaEnablementStatus]
@@ -34,7 +32,7 @@ class AuthRecaptchaConfig {
   }
 }
 
-@available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
+@available(iOS 13, *)
 enum AuthRecaptchaEnablementStatus: String, CaseIterable {
   case enforce = "ENFORCE"
   case audit = "AUDIT"
@@ -44,7 +42,7 @@ enum AuthRecaptchaEnablementStatus: String, CaseIterable {
   var stringValue: String { rawValue }
 }
 
-@available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
+@available(iOS 13, *)
 enum AuthRecaptchaProvider: String, CaseIterable {
   case password = "EMAIL_PASSWORD_PROVIDER"
   case phone = "PHONE_PROVIDER"
@@ -53,7 +51,7 @@ enum AuthRecaptchaProvider: String, CaseIterable {
   var stringValue: String { rawValue }
 }
 
-@available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
+@available(iOS 13, *)
 enum AuthRecaptchaAction: String {
   case defaultAction
   case signInWithPassword
@@ -67,15 +65,13 @@ enum AuthRecaptchaAction: String {
   var stringValue: String { rawValue }
 }
 
-@available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
+@available(iOS 13, *)
 class AuthRecaptchaVerifier {
   weak var auth: Auth?
   private var agentConfig: AuthRecaptchaConfig?
   private var tenantConfigs: [String: AuthRecaptchaConfig] = [:]
   private var recaptchaClient: RCARecaptchaClientProtocol?
   private let kRecaptchaVersion = "RECAPTCHA_ENTERPRISE"
-
-  init() {}
 
   func verify(forceRefresh: Bool, action: AuthRecaptchaAction) async throws -> String {
     try await retrieveRecaptchaConfig(forceRefresh: forceRefresh)
@@ -114,154 +110,149 @@ class AuthRecaptchaVerifier {
       return token
     #endif // !(COCOAPODS || SWIFT_PACKAGE)
   }
-}
 
-#if os(iOS)
-  @available(iOS 13, tvOS 13, macOS 10.15, macCatalyst 13, watchOS 7, *)
-  extension AuthRecaptchaVerifier {
-    func siteKey() -> String? {
+  func enablementStatus(forProvider provider: AuthRecaptchaProvider)
+    -> AuthRecaptchaEnablementStatus {
+    if let tenantID = auth?.tenantID,
+       let tenantConfig = tenantConfigs[tenantID],
+       let status = tenantConfig.enablementStatus[provider] {
+      return status
+    } else if let agentConfig = agentConfig,
+              let status = agentConfig.enablementStatus[provider] {
+      return status
+    } else {
+      return AuthRecaptchaEnablementStatus.off
+    }
+  }
+
+  func retrieveRecaptchaConfig(forceRefresh: Bool) async throws {
+    if !forceRefresh {
       if let tenantID = auth?.tenantID {
-        if let config = tenantConfigs[tenantID] {
-          return config.siteKey
+        if tenantConfigs[tenantID] != nil {
+          return
         }
-        return nil
-      }
-      return agentConfig?.siteKey
-    }
-
-    func enablementStatus(forProvider provider: AuthRecaptchaProvider)
-      -> AuthRecaptchaEnablementStatus {
-      if let tenantID = auth?.tenantID,
-         let tenantConfig = tenantConfigs[tenantID],
-         let status = tenantConfig.enablementStatus[provider] {
-        return status
-      } else if let agentConfig = agentConfig,
-                let status = agentConfig.enablementStatus[provider] {
-        return status
-      } else {
-        return AuthRecaptchaEnablementStatus.off
+      } else if agentConfig != nil {
+        return
       }
     }
 
-    private func recaptchaToken(siteKey: String,
-                                actionString: String,
-                                fakeToken: String) async -> (token: String, error: Error?,
-                                                             linked: Bool, actionCreated: Bool) {
-      if let recaptchaClient {
+    guard let auth = auth else {
+      throw AuthErrorUtils.error(code: .recaptchaNotEnabled,
+                                 message: "No requestConfiguration for Auth instance")
+    }
+    let request = GetRecaptchaConfigRequest(requestConfiguration: auth.requestConfiguration)
+    let response = try await auth.backend.call(with: request)
+    AuthLog.logInfo(code: "I-AUT000029", message: "reCAPTCHA config retrieval succeeded.")
+    try await parseRecaptchaConfigFromResponse(response: response)
+  }
+
+  func injectRecaptchaFields(request: any AuthRPCRequest,
+                             provider: AuthRecaptchaProvider,
+                             action: AuthRecaptchaAction) async throws {
+    try await retrieveRecaptchaConfig(forceRefresh: false)
+    if enablementStatus(forProvider: provider) != .off {
+      let token = try await verify(forceRefresh: false, action: action)
+      request.injectRecaptchaFields(recaptchaResponse: token, recaptchaVersion: kRecaptchaVersion)
+    } else {
+      request.injectRecaptchaFields(recaptchaResponse: nil, recaptchaVersion: kRecaptchaVersion)
+    }
+  }
+
+  private func siteKey() -> String? {
+    if let tenantID = auth?.tenantID {
+      if let config = tenantConfigs[tenantID] {
+        return config.siteKey
+      }
+      return nil
+    }
+    return agentConfig?.siteKey
+  }
+
+  private func recaptchaToken(siteKey: String,
+                              actionString: String,
+                              fakeToken: String) async -> (token: String, error: Error?,
+                                                           linked: Bool, actionCreated: Bool) {
+    if let recaptchaClient {
+      return await retrieveToken(
+        actionString: actionString,
+        fakeToken: fakeToken,
+        recaptchaClient: recaptchaClient
+      )
+    }
+
+    if let recaptcha =
+      NSClassFromString("RecaptchaEnterprise.RCARecaptcha") as? RCARecaptchaProtocol.Type {
+      do {
+        // Note, reCAPTCHA does not support multi-tenancy, so only one site key can be used per
+        // runtime.
+        // let client = try await recaptcha.fetchClient(withSiteKey: siteKey)
+        let client = try await recaptcha.getClient(withSiteKey: siteKey)
+        recaptchaClient = client
         return await retrieveToken(
           actionString: actionString,
           fakeToken: fakeToken,
-          recaptchaClient: recaptchaClient
+          recaptchaClient: client
         )
+      } catch {
+        return ("", error, true, true)
       }
-
-      if let recaptcha =
-        NSClassFromString("RecaptchaEnterprise.RCARecaptcha") as? RCARecaptchaProtocol.Type {
-        do {
-          // Note, reCAPTCHA does not support multi-tenancy, so only one site key can be used per
-          // runtime.
-          // let client = try await recaptcha.fetchClient(withSiteKey: siteKey)
-          let client = try await recaptcha.getClient(withSiteKey: siteKey)
-          recaptchaClient = client
-          return await retrieveToken(
-            actionString: actionString,
-            fakeToken: fakeToken,
-            recaptchaClient: client
-          )
-        } catch {
-          return ("", error, true, true)
-        }
-      } else {
-        // RecaptchaEnterprise not linked.
-        return ("", nil, false, false)
-      }
-    }
-
-    private func retrieveToken(actionString: String,
-                               fakeToken: String,
-                               recaptchaClient: RCARecaptchaClientProtocol) async -> (token: String,
-                                                                                      error: Error?,
-                                                                                      linked: Bool,
-                                                                                      actionCreated: Bool) {
-      if let recaptchaAction =
-        NSClassFromString("RecaptchaEnterprise.RCAAction") as? RCAActionProtocol.Type {
-        let action = recaptchaAction.init(customAction: actionString)
-        let token = try? await recaptchaClient.execute(withAction: action)
-        return (token ?? "NO_RECAPTCHA", nil, true, true)
-      } else {
-        // RecaptchaEnterprise not linked.
-        return ("", nil, false, false)
-      }
-    }
-
-    func retrieveRecaptchaConfig(forceRefresh: Bool) async throws {
-      if !forceRefresh {
-        if let tenantID = auth?.tenantID {
-          if tenantConfigs[tenantID] != nil {
-            return
-          }
-        } else if agentConfig != nil {
-          return
-        }
-      }
-
-      guard let auth = auth else {
-        throw AuthErrorUtils.error(code: .recaptchaNotEnabled,
-                                   message: "No requestConfiguration for Auth instance")
-      }
-      let request = GetRecaptchaConfigRequest(requestConfiguration: auth.requestConfiguration)
-      let response = try await auth.backend.call(with: request)
-      AuthLog.logInfo(code: "I-AUT000029", message: "reCAPTCHA config retrieval succeeded.")
-      try await parseRecaptchaConfigFromResponse(response: response)
-    }
-
-    func parseRecaptchaConfigFromResponse(response: GetRecaptchaConfigResponse) async throws {
-      var enablementStatus: [AuthRecaptchaProvider: AuthRecaptchaEnablementStatus] = [:]
-      var isRecaptchaEnabled = false
-      if let enforcementState = response.enforcementState {
-        for state in enforcementState {
-          guard let providerString = state["provider"],
-                let enforcementString = state["enforcementState"],
-                let provider = AuthRecaptchaProvider(rawValue: providerString),
-                let enforcement = AuthRecaptchaEnablementStatus(rawValue: enforcementString) else {
-            continue // Skip to the next state in the loop
-          }
-          enablementStatus[provider] = enforcement
-          if enforcement != .off {
-            isRecaptchaEnabled = true
-          }
-        }
-      }
-      var siteKey = ""
-      // Response's site key is of the format projects/<project-id>/keys/<site-key>'
-      if isRecaptchaEnabled {
-        if let recaptchaKey = response.recaptchaKey {
-          let keys = recaptchaKey.components(separatedBy: "/")
-          if keys.count != 4 {
-            throw AuthErrorUtils.error(code: .recaptchaNotEnabled, message: "Invalid siteKey")
-          }
-          siteKey = keys[3]
-        }
-      }
-      let config = AuthRecaptchaConfig(siteKey: siteKey, enablementStatus: enablementStatus)
-
-      if let tenantID = auth?.tenantID {
-        tenantConfigs[tenantID] = config
-      } else {
-        agentConfig = config
-      }
-    }
-
-    func injectRecaptchaFields(request: any AuthRPCRequest,
-                               provider: AuthRecaptchaProvider,
-                               action: AuthRecaptchaAction) async throws {
-      try await retrieveRecaptchaConfig(forceRefresh: false)
-      if enablementStatus(forProvider: provider) != .off {
-        let token = try await verify(forceRefresh: false, action: action)
-        request.injectRecaptchaFields(recaptchaResponse: token, recaptchaVersion: kRecaptchaVersion)
-      } else {
-        request.injectRecaptchaFields(recaptchaResponse: nil, recaptchaVersion: kRecaptchaVersion)
-      }
+    } else {
+      // RecaptchaEnterprise not linked.
+      return ("", nil, false, false)
     }
   }
-#endif
+
+  private func retrieveToken(actionString: String,
+                             fakeToken: String,
+                             recaptchaClient: RCARecaptchaClientProtocol) async -> (token: String,
+                                                                                    error: Error?,
+                                                                                    linked: Bool,
+                                                                                    actionCreated: Bool) {
+    if let recaptchaAction =
+      NSClassFromString("RecaptchaEnterprise.RCAAction") as? RCAActionProtocol.Type {
+      let action = recaptchaAction.init(customAction: actionString)
+      let token = try? await recaptchaClient.execute(withAction: action)
+      return (token ?? "NO_RECAPTCHA", nil, true, true)
+    } else {
+      // RecaptchaEnterprise not linked.
+      return ("", nil, false, false)
+    }
+  }
+
+  private func parseRecaptchaConfigFromResponse(response: GetRecaptchaConfigResponse) async throws {
+    var enablementStatus: [AuthRecaptchaProvider: AuthRecaptchaEnablementStatus] = [:]
+    var isRecaptchaEnabled = false
+    if let enforcementState = response.enforcementState {
+      for state in enforcementState {
+        guard let providerString = state["provider"],
+              let enforcementString = state["enforcementState"],
+              let provider = AuthRecaptchaProvider(rawValue: providerString),
+              let enforcement = AuthRecaptchaEnablementStatus(rawValue: enforcementString) else {
+          continue // Skip to the next state in the loop
+        }
+        enablementStatus[provider] = enforcement
+        if enforcement != .off {
+          isRecaptchaEnabled = true
+        }
+      }
+    }
+    var siteKey = ""
+    // Response's site key is of the format projects/<project-id>/keys/<site-key>'
+    if isRecaptchaEnabled {
+      if let recaptchaKey = response.recaptchaKey {
+        let keys = recaptchaKey.components(separatedBy: "/")
+        if keys.count != 4 {
+          throw AuthErrorUtils.error(code: .recaptchaNotEnabled, message: "Invalid siteKey")
+        }
+        siteKey = keys[3]
+      }
+    }
+    let config = AuthRecaptchaConfig(siteKey: siteKey, enablementStatus: enablementStatus)
+
+    if let tenantID = auth?.tenantID {
+      tenantConfigs[tenantID] = config
+    } else {
+      agentConfig = config
+    }
+  }
+}
